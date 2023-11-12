@@ -1,5 +1,6 @@
 import { Box } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import useTimer from "./hooks/useTimer";
 
 interface Props {
   count: number;
@@ -7,21 +8,11 @@ interface Props {
 }
 
 const Timer = ({ count, timeOutFn }: Props) => {
-  const [time, setTime] = useState(count);
+  const { time, timeOut } = useTimer({ count });
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      if (time > 0) {
-        setTime((x) => Math.round((x - 0.1) * 100) / 100);
-      } else {
-        timeOutFn();
-        clearInterval(timer);
-      }
-    }, 100);
-    return () => {
-      clearInterval(timer);
-    };
-  }, [time, timeOutFn]);
+    timeOut && timeOutFn();
+  }, [timeOut, timeOutFn]);
 
   return <Box>{time}</Box>;
 };

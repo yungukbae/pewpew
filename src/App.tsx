@@ -1,10 +1,12 @@
 import { Box, Button, Stack, Typography } from "@mui/material";
 import { useCallback, useContext, useEffect, useState } from "react";
-import Timer from "./Timer";
+import Damage from "./components/damage";
 import Level1 from "./components/level1";
 import Level2 from "./components/level2";
 import Level3 from "./components/level3";
 import Level4 from "./components/level4";
+import Loader from "./components/loader";
+import Pending from "./components/pending";
 import { GameContext } from "./context";
 import useAudio from "./hooks/useAudio";
 import { randNum } from "./util/random";
@@ -24,21 +26,21 @@ const Pointer = {
 };
 
 function App() {
-  const { loaded, audios } = useAudio({ shot: "/sound/shotting_sound.mp3" });
+  const { audios } = useAudio({ shot: "/sound/shotting_sound.mp3" });
   const [state, setState] = useState<GAME_STATE>(GAME_STATE.IDLE);
-  const [position, setPosition] = useState<{ x: number; y: number }>({
-    x: randNum(1000),
-    y: randNum(600),
+  const [position, setPosition] = useState<{ left: number; top: number }>({
+    left: randNum(1000),
+    top: randNum(600),
   });
   const ctx = useContext(GameContext);
-  const handleHitMiddle = useCallback(
+  const handleHitTarget = useCallback(
     (x: boolean) => {
       if (x) {
         ctx.handlePointAim({ point: 10, aim: 1 });
-        setPosition({ x: randNum(1000), y: randNum(600) });
+        setPosition({ left: randNum(1000), top: randNum(600) });
       } else {
         ctx.handlePointAim({ point: 5, aim: 0.5 });
-        setPosition({ x: randNum(1000), y: randNum(600) });
+        setPosition({ left: randNum(1000), top: randNum(600) });
       }
     },
     [ctx]
@@ -52,11 +54,11 @@ function App() {
         const hit = name.match(/edge|center/);
         audios.get("shot")?.();
         if (hit?.[0] === "edge") {
-          handleHitMiddle(false);
+          handleHitTarget(false);
         } else if (hit?.[0] === "center") {
-          handleHitMiddle(true);
+          handleHitTarget(true);
         } else {
-          ctx.handlePointAim({ point: 10, aim: 0 });
+          ctx.handlePointAim({ point: -2, aim: 0 });
         }
       }
     };
@@ -64,7 +66,7 @@ function App() {
     return () => {
       window.removeEventListener("click", handleClick);
     };
-  }, [audios, ctx, handleHitMiddle, position, state]);
+  }, [audios, ctx, handleHitTarget, position, state]);
 
   return (
     <>
@@ -78,6 +80,7 @@ function App() {
             cursor: "crosshair",
           }}
         >
+          {state === GAME_STATE.PLAYING && <Damage />}
           {state === GAME_STATE.FINISH && (
             <Stack
               direction={"column"}
@@ -91,7 +94,6 @@ function App() {
             >
               <Typography>에임정확도: {ctx.aim}</Typography>
               <Typography>포인트: {ctx.point}</Typography>
-              <Typography>이름:{ctx.name}</Typography>
             </Stack>
           )}
           {state === GAME_STATE.IDLE && (
@@ -109,34 +111,18 @@ function App() {
             </Button>
           )}
           {state === GAME_STATE.PENDING && (
-            <Stack
-              direction={"column"}
-              alignItems={"center"}
-              sx={{
-                position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%,-50%)",
+            <Pending
+              ctx={ctx}
+              timeOutFn={() => {
+                setState(GAME_STATE.PLAYING);
               }}
-            >
-              <Typography align="center" variant="h5">
-                {ctx.stage !== 4 ? `Round ${ctx.stage}` : "Final Round"}
-              </Typography>
-              <Typography align="center">게임이 곧 시작됩니다!</Typography>
-              <Timer
-                count={5}
-                timeOutFn={() => {
-                  setState(GAME_STATE.PLAYING);
-                }}
-              />
-            </Stack>
+            />
           )}
           {state === GAME_STATE.PLAYING && (
             <Box
               sx={{
                 position: "absolute",
-                left: position?.x,
-                top: position?.y,
+                ...position,
               }}
             >
               {Pointer[ctx.stage as keyof typeof Pointer]}
@@ -144,24 +130,18 @@ function App() {
           )}
         </Box>
       </div>
-      <Stack direction={"row"} gap={1} p={1}>
-        {state === GAME_STATE.PLAYING && (
-          <Typography>
-            남은시간:
-            <Timer
-              count={10}
-              timeOutFn={() => {
-                if (ctx.stage === 4) {
-                  setState(GAME_STATE.FINISH);
-                } else {
-                  ctx.nextStage();
-                  setState(GAME_STATE.PENDING);
-                }
-              }}
-            />
-          </Typography>
-        )}
-      </Stack>
+      {state === GAME_STATE.PLAYING && (
+        <Loader
+          timeOut={() => {
+            if (ctx.stage === 4) {
+              setState(GAME_STATE.FINISH);
+            } else {
+              ctx.nextStage();
+              setState(GAME_STATE.PENDING);
+            }
+          }}
+        />
+      )}
     </>
   );
 }

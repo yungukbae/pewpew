@@ -1,6 +1,6 @@
 import { PropsWithChildren, createContext, useState } from "react";
 
-interface GameCtxProps extends State {
+export interface GameCtxProps extends State {
   handlePointAim: (x: { point: number; aim: number }) => void;
   handleName: (x: string) => void;
   nextStage: () => void;

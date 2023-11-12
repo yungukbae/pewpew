@@ -1,11 +1,6 @@
 import { Box } from "@mui/material";
 
-interface Props {
-  center?: () => void;
-  edge?: () => void;
-}
-
-const Level1 = (props: Props) => {
+const Level1 = () => {
   return (
     <Box
       sx={{
@@ -26,7 +21,6 @@ const Level1 = (props: Props) => {
           top: "0",
           left: "0",
         }}
-        onClick={props.edge}
       ></Box>
       <Box
         className={"center"}
@@ -39,7 +33,6 @@ const Level1 = (props: Props) => {
           top: "25px",
           left: "25px",
         }}
-        onClick={props.center}
       ></Box>
     </Box>
   );
