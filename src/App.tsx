@@ -33,15 +33,15 @@ function App() {
     top: randNum(600),
   });
   const ctx = useContext(GameContext);
+
   const handleHitTarget = useCallback(
     (x: boolean) => {
       if (x) {
         ctx.handlePointAim({ point: 10, aim: 1 });
-        setPosition({ left: randNum(1000), top: randNum(600) });
       } else {
         ctx.handlePointAim({ point: 5, aim: 0.5 });
-        setPosition({ left: randNum(1000), top: randNum(600) });
       }
+      setPosition({ left: randNum(1000), top: randNum(600) });
     },
     [ctx]
   );
@@ -52,7 +52,9 @@ function App() {
       if (state === GAME_STATE.PLAYING && target) {
         const name = target.className;
         const hit = name.match(/edge|center/);
+
         audios.get("shot")?.();
+
         if (hit?.[0] === "edge") {
           handleHitTarget(false);
         } else if (hit?.[0] === "center") {
@@ -62,6 +64,7 @@ function App() {
         }
       }
     };
+
     window.addEventListener("click", handleClick);
     return () => {
       window.removeEventListener("click", handleClick);
